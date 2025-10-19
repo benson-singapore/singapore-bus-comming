@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公交到站提醒</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 16px;
+            padding-bottom: 32px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-top: 16px;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .header .time {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+        
+        .station-info {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+            color: white;
+            text-align: center;
+        }
+        
+        .station-info .label {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+        
+        .station-info .value {
+            font-size: 22px;
+            font-weight: bold;
+        }
+        
+        .bus-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .bus-card {
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .bus-card:active {
+            transform: scale(0.98);
+        }
+        
+        .line-header {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            padding: 16px 20px;
+            color: white;
+        }
+        
+        .line-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .line-direction {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .buses-container {
+            padding: 0;
+        }
+        
+        .bus-item {
+            padding: 16px 20px;
+        }
+        
+        .bus-divider {
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .bus-item-simple {
+            padding: 12px 20px;
+        }
+        
+        .simple-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .simple-label {
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .simple-time {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .simple-distance {
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .bus-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .bus-label {
+            color: #7c3aed;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-arriving {
+            background: #ef4444;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-soon {
+            background: #f97316;
+        }
+        
+        .status-onway {
+            background: #3b82f6;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .bus-time-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 12px;
+        }
+        
+        .time-display {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .time-label {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        
+        .distance-display {
+            font-size: 20px;
+            font-weight: 600;
+            color: #374151;
+            text-align: right;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background: #e5e7eb;
+            border-radius: 10px;
+            height: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s linear;
+        }
+        
+        .progress-arriving {
+            background: #ef4444;
+        }
+        
+        .progress-soon {
+            background: #f97316;
+        }
+        
+        .progress-onway {
+            background: #3b82f6;
+        }
+        
+        .next-stop {
+            display: flex;
+            align-items: center;
+            color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .location-icon {
+            width: 14px;
+            height: 14px;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🚌 公交到站</h1>
+            <div class="time" id="currentTime"></div>
+        </div>
+
+        <!-- 当前站点 -->
+        <div class="station-info">
+            <div class="label">当前站点</div>
+            <div class="value">深圳湾公园站</div>
+        </div>
+
+        <!-- 公交线路列表 -->
+        <div class="bus-list" id="busList"></div>
+
+        <!-- 底部提示 -->
+        <div class="footer">
+            <p>数据每秒自动更新</p>
+        </div>
+    </div>
+
+    <script>
+        // 初始化公交数据 - 按线路分组
+        let busLines = [
+            {
+                lineNumber: '138路',
+                station: '深圳湾公园站',
+                direction: '开往大学城方向',
+                buses: [
+                    { id: 1, arrival: 180, distance: '3站', nextStop: '科技园站' },
+                    { id: 2, arrival: 480, distance: '8站', nextStop: '软件园站' },
+                    { id: 3, arrival: 780, distance: '13站', nextStop: '大学城站' }
+                ]
+            },
+            {
+                lineNumber: 'M453路',
+                station: '深圳湾公园站',
+                direction: '开往前海方向',
+                buses: [
+                    { id: 4, arrival: 120, distance: '2站', nextStop: '后海站' },
+                    { id: 5, arrival: 360, distance: '6站', nextStop: '海月地铁站' },
+                    { id: 6, arrival: 600, distance: '10站', nextStop: '前海湾站' }
+                ]
+            },
+            {
+                lineNumber: '80路',
+                station: '深圳湾公园站',
+                direction: '开往东部华侨城方向',
+                buses: [
+                    { id: 7, arrival: 90, distance: '2站', nextStop: '华侨城站' },
+                    { id: 8, arrival: 420, distance: '7站', nextStop: '世界之窗站' },
+                    { id: 9, arrival: 660, distance: '11站', nextStop: '东部华侨城站' }
+                ]
+            }
+        ];
+
+        // 格式化时间
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}分${secs}秒`;
+        }
+
+        // 获取进度百分比
+        function getProgressPercentage(arrival) {
+            const maxTime = 900; // 15分钟
+            return Math.max(0, ((maxTime - arrival) / maxTime) * 100);
+        }
+
+        // 获取状态类名
+        function getStatusClass(arrival) {
+            if (arrival <= 60) return 'arriving';
+            if (arrival <= 180) return 'soon';
+            return 'onway';
+        }
+
+        // 获取状态文本
+        function getStatusText(arrival) {
+            if (arrival <= 60) return '即将到站';
+            if (arrival <= 180) return '快到了';
+            return '在路上';
+        }
+
+        // 获取公交标签
+        function getBusLabel(index) {
+            const labels = ['当前一趟', '下一趟', '下下一趟'];
+            return labels[index] || `第${index + 1}趟`;
+        }
+
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeStr;
+        }
+
+        // 渲染公交列表
+        function renderBusList() {
+            const busListEl = document.getElementById('busList');
+            busListEl.innerHTML = '';
+
+            busLines.forEach((line) => {
+                const lineCard = document.createElement('div');
+                lineCard.className = 'bus-card';
+                
+                // 创建卡片头部
+                let cardHTML = `
+                    <div class="line-header">
+                        <div class="line-number">${line.lineNumber}</div>
+                        <div class="line-direction">${line.direction}</div>
+                    </div>
+                    <div class="buses-container">
+                `;
+
+                // 添加每趟车的信息
+                line.buses.forEach((bus, index) => {
+                    const statusClass = getStatusClass(bus.arrival);
+                    const progress = getProgressPercentage(bus.arrival);
+                    
+                    if (index === 0) {
+                        // 当前一趟 - 显示完整信息
+                        cardHTML += `
+                            <div class="bus-item bus-divider">
+                                <div class="bus-item-header">
+                                    <span class="bus-label">${getBusLabel(index)}</span>
+                                    <span class="status-badge status-${statusClass}">
+                                        ${getStatusText(bus.arrival)}
+                                    </span>
+                                </div>
+                                
+                                <div class="bus-time-info">
+                                    <div>
+                                        <div class="time-display">${formatTime(bus.arrival)}</div>
+                                        <div class="time-label">预计到达</div>
+                                    </div>
+                                    <div>
+                                        <div class="distance-display">${bus.distance}</div>
+                                        <div class="time-label">距离</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="progress-container">
+                                    <div class="progress-bar progress-${statusClass}" 
+                                         style="width: ${progress}%"></div>
+                                </div>
+                                
+                                <div class="next-stop">
+                                    <svg class="location-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span>即将到达：${bus.nextStop}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // 后面两趟 - 只显示简单信息
+                        cardHTML += `
+                            <div class="bus-item-simple ${index < line.buses.length - 1 ? 'bus-divider' : ''}">
+                                <div class="simple-row">
+                                    <span class="simple-label">${getBusLabel(index)}</span>
+                                    <span class="simple-time">${formatTime(bus.arrival)}</span>
+                                    <span class="simple-distance">${bus.distance}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                cardHTML += `</div>`;
+                lineCard.innerHTML = cardHTML;
+                busListEl.appendChild(lineCard);
+            });
+        }
+
+        // 更新公交数据
+        function updateBuses() {
+            busLines.forEach(line => {
+                line.buses = line.buses.map(bus => ({
+                    ...bus,
+                    arrival: Math.max(0, bus.arrival - 1)
+                }));
+            });
+            renderBusList();
+        }
+
+        // 初始化
+        updateTime();
+        renderBusList();
+
+        // 每秒更新
+        setInterval(() => {
+            updateTime();
+            updateBuses();
+        }, 1000);
+    </script>
+</body>
+</html>
