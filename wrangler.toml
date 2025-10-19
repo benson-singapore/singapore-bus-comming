@@ -1,0 +1,6 @@
+name = "bus-comming-nextjs"
+type = "javascript"
+compatibility_date = "2024-10-19"
+
+# Enable Node.js compatibility for Cloudflare Pages
+compatibility_flags = ["nodejs_compat"]
