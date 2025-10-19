@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { localStorageUtil } from '@/utils/localStorage';
-import { fetchBusArrivals, formatDuration, getStatusClass, getStatusText, filterBusByNumber } from '@/utils/busApi';
+import { fetchBusArrivals, formatDuration, getStatusClass, getStatusText, filterBusByNumber, formatArrivalTime } from '@/utils/busApi';
 import { SavedBusStop, BusService } from '@/types/bus';
 import Link from 'next/link';
 
@@ -287,6 +287,7 @@ export default function Home() {
                 {line.buses.map((bus, busIndex) => {
                   const statusClass = getStatusClass(bus.durationMs);
                   const progress = getProgressPercentage(bus.durationMs);
+                  const formattedTime = formatArrivalTime(bus.time);
 
                   if (busIndex === 0) {
                     // First bus - show full details
@@ -320,6 +321,9 @@ export default function Home() {
                             <div className="text-sm text-gray-600">
                               {bus.monitored === 1 ? '📍 实时位置' : '⏱️ 预计时间'}
                             </div>
+                            <div className="text-gray-900 text-lg font-semibold">
+                              {formattedTime}
+                            </div>
                           </div>
                         </div>
 
@@ -339,6 +343,7 @@ export default function Home() {
                     );
                   } else {
                     // Subsequent buses - simple display
+                    const subsequentArrivalTime = formatArrivalTime(bus.time);
                     return (
                       <div
                         key={busIndex}
@@ -353,9 +358,14 @@ export default function Home() {
                           <span className="text-gray-900 text-lg font-semibold flex-1 text-center">
                             {formatDuration(bus.durationMs)}
                           </span>
-                          <span className="text-gray-500 text-sm">
-                            {bus.monitored === 1 ? '📍' : '⏱️'}
-                          </span>
+                          <div className="text-right">
+                            <div className="text-gray-500 text-sm">
+                              {bus.monitored === 1 ? '📍' : '⏱️'}
+                            </div>
+                            <div className="text-gray-900 text-sm font-semibold">
+                              {subsequentArrivalTime}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );

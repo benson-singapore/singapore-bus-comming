@@ -112,16 +112,6 @@ export default function ManagePage() {
           ← 返回主页
         </Link>
 
-        {/* Add New Button */}
-        {!isAdding && (
-          <button
-            onClick={() => setIsAdding(true)}
-            className="w-full mb-6 bg-white rounded-2xl p-4 text-purple-600 font-bold text-lg hover:bg-white/90 transition-all shadow-lg"
-          >
-            ➕ 添加新站点
-          </button>
-        )}
-
         {/* Add/Edit Form */}
         {isAdding && (
           <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg">
@@ -202,7 +192,7 @@ export default function ManagePage() {
             <div className="bg-white/20 backdrop-blur-lg rounded-2xl p-8 text-center text-white">
               <div className="text-5xl mb-4">📋</div>
               <p className="text-lg">还没有添加任何站点</p>
-              <p className="text-sm text-white/80 mt-2">点击上方按钮添加您的第一个站点</p>
+              <p className="text-sm text-white/80 mt-2">点击下方按钮添加您的第一个站点</p>
             </div>
           ) : (
             busStops.map((stop, index) => (
@@ -289,6 +279,16 @@ export default function ManagePage() {
             ))
           )}
         </div>
+
+        {/* Add New Button - at the bottom */}
+        {!isAdding && (
+          <button
+            onClick={() => setIsAdding(true)}
+            className="w-full mt-6 bg-white rounded-2xl p-4 text-purple-600 font-bold text-lg hover:bg-white/90 transition-all shadow-lg"
+          >
+            ➕ 添加新站点
+          </button>
+        )}
       </div>
     </div>
   );

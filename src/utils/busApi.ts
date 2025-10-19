@@ -33,6 +33,21 @@ export function formatDuration(durationMs: number): string {
   return `${mins}分${secs}秒`;
 }
 
+export function formatArrivalTime(isoTimeString: string): string {
+  try {
+    const date = new Date(isoTimeString);
+    return date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  } catch (error) {
+    console.error('Error formatting arrival time:', error);
+    return '';
+  }
+}
+
 export function getStatusClass(durationMs: number): 'arriving' | 'soon' | 'onway' {
   const seconds = Math.floor(durationMs / 1000);
   if (seconds <= 60) return 'arriving';
