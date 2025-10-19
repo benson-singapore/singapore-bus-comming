@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 export default function ManagePage() {
   const [busStops, setBusStops] = useState<SavedBusStop[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
   // Form state
@@ -55,10 +55,8 @@ export default function ManagePage() {
       });
     }
 
-    // Reset form
-    setFormData({ name: '', code: '', buses: '' });
-    setIsAdding(false);
-    setEditingId(null);
+    // Reset form and close modal
+    resetForm();
     loadBusStops();
   };
 
@@ -69,7 +67,7 @@ export default function ManagePage() {
       buses: stop.buses.join(', '),
     });
     setEditingId(stop.id);
-    setIsAdding(true);
+    setIsModalOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -79,10 +77,16 @@ export default function ManagePage() {
     }
   };
 
-  const handleCancel = () => {
+  const resetForm = () => {
     setFormData({ name: '', code: '', buses: '' });
-    setIsAdding(false);
+    setIsModalOpen(false);
     setEditingId(null);
+  };
+
+  const handleOpenAddModal = () => {
+    setFormData({ name: '', code: '', buses: '' });
+    setEditingId(null);
+    setIsModalOpen(true);
   };
 
   const handleMoveUp = (id: string) => {
@@ -111,80 +115,6 @@ export default function ManagePage() {
         >
           ← 返回主页
         </Link>
-
-        {/* Add/Edit Form */}
-        {isAdding && (
-          <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              {editingId ? '编辑站点' : '添加新站点'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-semibold mb-2">
-                  站点名称 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="例如: 深圳湾公园站"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700 font-semibold mb-2">
-                  站点代码 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  placeholder="例如: 67661"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none"
-                  required
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  输入公交站点的代码（通常是5位数字）
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-gray-700 font-semibold mb-2">
-                  监听的线路 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.buses}
-                  onChange={(e) => setFormData({ ...formData, buses: e.target.value })}
-                  placeholder="例如: 371, 5, 14"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none"
-                  required
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  输入要监听的公交线路号，多个线路用逗号分隔
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-all"
-                >
-                  {editingId ? '保存修改' : '添加'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition-all"
-                >
-                  取消
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         {/* Bus Stops List */}
         <div className="space-y-4">
@@ -281,15 +211,91 @@ export default function ManagePage() {
         </div>
 
         {/* Add New Button - at the bottom */}
-        {!isAdding && (
-          <button
-            onClick={() => setIsAdding(true)}
-            className="w-full mt-6 bg-white rounded-2xl p-4 text-purple-600 font-bold text-lg hover:bg-white/90 transition-all shadow-lg"
-          >
-            ➕ 添加新站点
-          </button>
-        )}
+        <button
+          onClick={handleOpenAddModal}
+          className="w-full mt-6 bg-white rounded-2xl p-4 text-purple-600 font-bold text-lg hover:bg-white/90 transition-all shadow-lg"
+        >
+          ➕ 添加新站点
+        </button>
       </div>
+
+      {/* Modal Overlay */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          {/* Modal Content */}
+          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              {editingId ? '✏️ 编辑站点' : '➕ 添加新站点'}
+            </h2>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 font-semibold mb-2">
+                  站点名称 *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="例如: 深圳湾公园站"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none text-gray-900 placeholder-gray-400"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 font-semibold mb-2">
+                  站点代码 *
+                </label>
+                <input
+                  type="text"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  placeholder="例如: 67661"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none text-gray-900 placeholder-gray-400"
+                  required
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  输入公交站点的代码（通常是5位数字）
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-700 font-semibold mb-2">
+                  监听的线路 *
+                </label>
+                <input
+                  type="text"
+                  value={formData.buses}
+                  onChange={(e) => setFormData({ ...formData, buses: e.target.value })}
+                  placeholder="例如: 371, 5, 14"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none text-gray-900 placeholder-gray-400"
+                  required
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  输入要监听的公交线路号，多个线路用逗号分隔
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-all"
+                >
+                  {editingId ? '保存修改' : '添加'}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition-all"
+                >
+                  取消
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
