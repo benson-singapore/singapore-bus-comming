@@ -219,20 +219,12 @@ export default function Home() {
           <div className="text-white/90 text-sm">{currentTime}</div>
         </div>
 
-        {/* Add Bus Stop Button */}
-        <Link
-          href="/manage"
-          className="block w-full mb-6 bg-white/20 backdrop-blur-lg rounded-2xl p-4 text-white text-center font-semibold hover:bg-white/30 transition-all"
-        >
-          ➕ 管理监听的站点和线路
-        </Link>
-
         {/* Empty State */}
         {savedStops.length === 0 && (
           <div className="bg-white/20 backdrop-blur-lg rounded-2xl p-8 text-center text-white">
             <div className="text-5xl mb-4">🚏</div>
             <h2 className="text-xl font-bold mb-2">还没有监听的公交站点</h2>
-            <p className="text-white/80 mb-4">点击上方按钮添加您要监听的站点和线路</p>
+            <p className="text-white/80 mb-4">点击下方按钮添加您要监听的站点和线路</p>
           </div>
         )}
 
@@ -376,6 +368,17 @@ export default function Home() {
             );
           })}
         </div>
+
+        {/* Add Bus Stop Button */}
+        <Link
+          style={{
+            marginTop: 20,
+          }}
+          href="/manage"
+          className="block w-full mb-6 bg-white/20 backdrop-blur-lg rounded-2xl p-4 text-white text-center font-semibold hover:bg-white/30 transition-all"
+        >
+          ➕ 管理监听的站点和线路
+        </Link>
 
         {/* Footer */}
         <div className="text-center mt-6 text-white/70 text-sm">
