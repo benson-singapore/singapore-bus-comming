@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { localStorageUtil } from '@/utils/localStorage';
 import { fetchBusArrivals, formatDuration, getStatusClass, getStatusText, filterBusByNumber, formatArrivalTime } from '@/utils/busApi';
-import { SavedBusStop, BusService } from '@/types/bus';
+import { SavedBusStop } from '@/types/bus';
 import Link from 'next/link';
 
 interface BusLineDisplay {
@@ -11,8 +11,9 @@ interface BusLineDisplay {
   stopName: string;
   stopCode: string;
   busNumber: string;
-  operator: string;
-  buses: {
+  operator?: string;
+  status?: 'not_found' | 'no_data'; // 'not_found': 未查询到, 'no_data': 无班次
+  buses?: {
     label: string;
     durationMs: number;
     time: string;
@@ -67,39 +68,64 @@ export default function Home() {
           try {
             const data = await fetchBusArrivals(stop.code);
             const filteredServices = filterBusByNumber(data.services, stop.buses);
-            console.log(`  站点 ${stop.name}: ${filteredServices.length} 条线路`);
+            console.log(`  站点 ${stop.name}: ${filteredServices.length} 条线路，监听 ${stop.buses.length} 条线路`);
 
-            filteredServices.forEach((service: BusService) => {
+            // Create entries for all monitored buses
+            stop.buses.forEach((busNumber) => {
+              const foundService = filteredServices.find(s => s.no === busNumber);
+              
+              if (foundService) {
+                // Bus found with data
+                allBusLines.push({
+                  stopId: stop.id,
+                  stopName: stop.name,
+                  stopCode: stop.code,
+                  busNumber: foundService.no,
+                  operator: foundService.operator,
+                  buses: [
+                    {
+                      label: '当前一趟',
+                      durationMs: foundService.next.duration_ms,
+                      time: foundService.next.time,
+                      monitored: foundService.next.monitored,
+                    },
+                    {
+                      label: '下一趟',
+                      durationMs: foundService.next2.duration_ms,
+                      time: foundService.next2.time,
+                      monitored: foundService.next2.monitored,
+                    },
+                    {
+                      label: '下下一趟',
+                      durationMs: foundService.next3.duration_ms,
+                      time: foundService.next3.time,
+                      monitored: foundService.next3.monitored,
+                    },
+                  ],
+                });
+              } else {
+                // Bus not found in API response
+                allBusLines.push({
+                  stopId: stop.id,
+                  stopName: stop.name,
+                  stopCode: stop.code,
+                  busNumber: busNumber,
+                  status: 'not_found',
+                });
+              }
+            });
+          } catch (err) {
+            console.error(`Error fetching data for stop ${stop.code}:`, err);
+            // Add placeholder for stops that failed to fetch
+            stop.buses.forEach((busNumber) => {
               allBusLines.push({
                 stopId: stop.id,
                 stopName: stop.name,
                 stopCode: stop.code,
-                busNumber: service.no,
-                operator: service.operator,
-                buses: [
-                  {
-                    label: '当前一趟',
-                    durationMs: service.next.duration_ms,
-                    time: service.next.time,
-                    monitored: service.next.monitored,
-                  },
-                  {
-                    label: '下一趟',
-                    durationMs: service.next2.duration_ms,
-                    time: service.next2.time,
-                    monitored: service.next2.monitored,
-                  },
-                  {
-                    label: '下下一趟',
-                    durationMs: service.next3.duration_ms,
-                    time: service.next3.time,
-                    monitored: service.next3.monitored,
-                  },
-                ],
+                busNumber: busNumber,
+                status: 'not_found',
               });
             });
-          } catch (err) {
-            console.error(`Error fetching data for stop ${stop.code}:`, err);
           }
         }
 
@@ -148,37 +174,49 @@ export default function Home() {
         savedStops.forEach(savedStop => {
           if (savedStop.id === stopId && savedStop.code === stopCode) {
             // This is the stop being refreshed, use new data
-            filteredServices.forEach((service: BusService) => {
-              allLines.push({
-                stopId: savedStop.id,
-                stopName: savedStop.name,
-                stopCode: savedStop.code,
-                busNumber: service.no,
-                operator: service.operator,
-                buses: [
-                  {
-                    label: '当前一趟',
-                    durationMs: service.next.duration_ms,
-                    time: service.next.time,
-                    monitored: service.next.monitored,
-                  },
-                  {
-                    label: '下一趟',
-                    durationMs: service.next2.duration_ms,
-                    time: service.next2.time,
-                    monitored: service.next2.monitored,
-                  },
-                  {
-                    label: '下下一趟',
-                    durationMs: service.next3.duration_ms,
-                    time: service.next3.time,
-                    monitored: service.next3.monitored,
-                  },
-                ],
-              });
+            savedStop.buses.forEach((busNumber) => {
+              const foundService = filteredServices.find(s => s.no === busNumber);
+              
+              if (foundService) {
+                allLines.push({
+                  stopId: savedStop.id,
+                  stopName: savedStop.name,
+                  stopCode: savedStop.code,
+                  busNumber: foundService.no,
+                  operator: foundService.operator,
+                  buses: [
+                    {
+                      label: '当前一趟',
+                      durationMs: foundService.next.duration_ms,
+                      time: foundService.next.time,
+                      monitored: foundService.next.monitored,
+                    },
+                    {
+                      label: '下一趟',
+                      durationMs: foundService.next2.duration_ms,
+                      time: foundService.next2.time,
+                      monitored: foundService.next2.monitored,
+                    },
+                    {
+                      label: '下下一趟',
+                      durationMs: foundService.next3.duration_ms,
+                      time: foundService.next3.time,
+                      monitored: foundService.next3.monitored,
+                    },
+                  ],
+                });
+              } else {
+                allLines.push({
+                  stopId: savedStop.id,
+                  stopName: savedStop.name,
+                  stopCode: savedStop.code,
+                  busNumber: busNumber,
+                  status: 'not_found',
+                });
+              }
             });
           } else {
-            // Keep existing data for other stops
+            // Keep existing lines for other stops
             prevLines.forEach(line => {
               if (line.stopId === savedStop.id) {
                 allLines.push(line);
@@ -186,7 +224,6 @@ export default function Home() {
             });
           }
         });
-
         return allLines;
       });
     } catch (err) {
@@ -276,93 +313,107 @@ export default function Home() {
 
               {/* Buses Container */}
               <div>
-                {line.buses.map((bus, busIndex) => {
-                  const statusClass = getStatusClass(bus.durationMs);
-                  const progress = getProgressPercentage(bus.durationMs);
-                  const formattedTime = formatArrivalTime(bus.time);
+                {line.status === 'not_found' ? (
+                  // Show message for bus not found
+                  <div className="p-6 text-center text-gray-500">
+                    <div className="text-4xl mb-2">🚫</div>
+                    <p className="font-semibold">未查询到班次信息</p>
+                    <p className="text-sm mt-1">该线路可能已停运或暂无班次</p>
+                  </div>
+                ) : line.buses && line.buses.length > 0 ? (
+                  line.buses.map((bus, busIndex) => {
+                    const statusClass = getStatusClass(bus.durationMs);
+                    const progress = getProgressPercentage(bus.durationMs);
+                    const formattedTime = formatArrivalTime(bus.time);
 
-                  if (busIndex === 0) {
-                    // First bus - show full details
-                    return (
-                      <div key={busIndex} className="p-4 border-b border-gray-200">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-purple-600 font-semibold text-base">
-                            {bus.label}
-                          </span>
-                          <span
-                            className={`px-3 py-1 rounded-full text-white text-xs font-medium ${
-                              statusClass === 'arriving'
-                                ? 'bg-red-500 animate-pulse'
-                                : statusClass === 'soon'
-                                ? 'bg-orange-500'
-                                : 'bg-blue-500'
-                            }`}
-                          >
-                            {getStatusText(bus.durationMs)}
-                          </span>
+                    if (busIndex === 0) {
+                      // First bus - show full details
+                      return (
+                        <div key={busIndex} className="p-4 border-b border-gray-200">
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-purple-600 font-semibold text-base">
+                              {bus.label}
+                            </span>
+                            <span
+                              className={`px-3 py-1 rounded-full text-white text-xs font-medium ${
+                                statusClass === 'arriving'
+                                  ? 'bg-red-500 animate-pulse'
+                                  : statusClass === 'soon'
+                                  ? 'bg-orange-500'
+                                  : 'bg-blue-500'
+                              }`}
+                            >
+                              {getStatusText(bus.durationMs)}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-end mb-3">
+                            <div>
+                              <div className="text-3xl font-bold text-gray-900">
+                                {formatDuration(bus.durationMs)}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">预计到达</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm text-gray-600">
+                                {bus.monitored === 1 ? '📍 实时位置' : '⏱️ 预计时间'}
+                              </div>
+                              <div className="text-gray-900 text-lg font-semibold">
+                                {formattedTime}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-1000 ${
+                                statusClass === 'arriving'
+                                  ? 'bg-red-500'
+                                  : statusClass === 'soon'
+                                  ? 'bg-orange-500'
+                                  : 'bg-blue-500'
+                              }`}
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
                         </div>
-
-                        <div className="flex justify-between items-end mb-3">
-                          <div>
-                            <div className="text-3xl font-bold text-gray-900">
+                      );
+                    } else {
+                      // Subsequent buses - simple display
+                      const subsequentArrivalTime = formatArrivalTime(bus.time);
+                      return (
+                        <div
+                          key={busIndex}
+                          className={`px-4 py-3 ${
+                            busIndex < (line.buses?.length ?? 0) - 1 ? 'border-b border-gray-200' : ''
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 text-sm font-medium">
+                              {bus.label}
+                            </span>
+                            <span className="text-gray-900 text-lg font-semibold flex-1 text-center">
                               {formatDuration(bus.durationMs)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">预计到达</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm text-gray-600">
-                              {bus.monitored === 1 ? '📍 实时位置' : '⏱️ 预计时间'}
-                            </div>
-                            <div className="text-gray-900 text-lg font-semibold">
-                              {formattedTime}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-1000 ${
-                              statusClass === 'arriving'
-                                ? 'bg-red-500'
-                                : statusClass === 'soon'
-                                ? 'bg-orange-500'
-                                : 'bg-blue-500'
-                            }`}
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    // Subsequent buses - simple display
-                    const subsequentArrivalTime = formatArrivalTime(bus.time);
-                    return (
-                      <div
-                        key={busIndex}
-                        className={`px-4 py-3 ${
-                          busIndex < line.buses.length - 1 ? 'border-b border-gray-200' : ''
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 text-sm font-medium">
-                            {bus.label}
-                          </span>
-                          <span className="text-gray-900 text-lg font-semibold flex-1 text-center">
-                            {formatDuration(bus.durationMs)}
-                          </span>
-                          <div className="text-right">
-                            <div className="text-gray-500 text-sm">
-                              {bus.monitored === 1 ? '📍' : '⏱️'}
-                            </div>
-                            <div className="text-gray-900 text-sm font-semibold">
-                              {subsequentArrivalTime}
+                            </span>
+                            <div className="text-right">
+                              <div className="text-gray-500 text-sm">
+                                {bus.monitored === 1 ? '📍' : '⏱️'}
+                              </div>
+                              <div className="text-gray-900 text-sm font-semibold">
+                                {subsequentArrivalTime}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  }
-                })}
+                      );
+                    }
+                  })
+                ) : (
+                  <div className="p-6 text-center text-gray-500">
+                    <div className="text-2xl mb-2">📭</div>
+                    <p className="text-sm">暂无班次信息</p>
+                  </div>
+                )}
               </div>
               </div>
             );
