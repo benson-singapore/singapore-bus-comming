@@ -5,6 +5,7 @@ import { localStorageUtil } from '@/utils/localStorage';
 import { fetchBusArrivals, formatDuration, getStatusClass, getStatusText, filterBusByNumber, formatArrivalTime } from '@/utils/busApi';
 import { SavedBusStop } from '@/types/bus';
 import Link from 'next/link';
+import InstallButton from './components/InstallButton';
 
 interface BusLineDisplay {
   stopId: string;
@@ -421,15 +422,19 @@ export default function Home() {
         </div>
 
         {/* Add Bus Stop Button */}
-        <Link
-          style={{
-            marginTop: 20,
-          }}
+        <Link style={{ marginTop: 20 }} 
           href="/manage"
           className="block w-full mb-6 bg-white/20 backdrop-blur-lg rounded-2xl p-4 text-white text-center font-semibold hover:bg-white/30 transition-all"
         >
           ➕ 管理监听的站点和线路
         </Link>
+
+
+        {/* Install Button */}
+        <div className="mb-4">
+          <InstallButton />
+        </div>
+
 
         {/* Footer */}
         <div className="text-center mt-6 text-white/70 text-sm">
