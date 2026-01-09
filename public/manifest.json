@@ -4,8 +4,8 @@
   "description": "实时监控公交到站信息",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "background_color": "#a855f7",
+  "theme_color": "#a855f7",
   "orientation": "portrait",
   "icons": [
     {

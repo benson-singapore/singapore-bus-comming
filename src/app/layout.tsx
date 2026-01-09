@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "公交提醒",
   },
   icons: {
@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     maximumScale: 1,
     userScalable: false,
   },
+  themeColor: "#9333ea",
 };
 
 export default function RootLayout({
@@ -33,14 +34,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" style={{ background: '#9333ea', minHeight: '100vh' }}>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="公交提醒" />
+        <meta name="theme-color" content="#9333ea" />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" style={{ background: 'transparent', minHeight: '100vh' }}>
         {children}
       </body>
     </html>
